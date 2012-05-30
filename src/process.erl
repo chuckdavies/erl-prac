@@ -9,7 +9,7 @@
 -module(process).
 
 %% API
--export([calculator/0]).
+-export([calculator/0,loop/0]).
 
 %%%===================================================================
 %%% API
@@ -32,7 +32,7 @@
 %%%    27> Calc({m,5,2}).
 %%%    timeout
 calculator()->
-    Pid=spawn(fun loop/0),
+    Pid=spawn(process,loop,[]),
     fun(Op)->
 	    Pid!{self(),Op},
 	    receive
@@ -52,19 +52,22 @@ loop()->
     receive
 	{From,{a,N1,N2}}->
 	    From!{self(),N1+N2},
-	    loop();
+	    process:loop();
 	{From,{s,N1,N2}}->
 	    From!{self(),N1-N2},
-	    loop();
+	    process:loop();
 	{From,{m,N1,N2}}->
 	    From!{self(),N1*N2},
-	    loop();
+	    process:loop();
 	{From,{d,N1,N2}}->
 	    From!{self(),N1/N2},
-	    loop();
+	    process:loop();
+	{From,{e,N1,N2}}->
+	    From!{self(),math:pow(N1,N2)},
+	    process:loop();
 	{From,{exit}}->
 	    From!{self(),"Done"};
 	{From,_Other} ->
 	    From!{self(),"Unknown operation"},
-	    loop()
+	    process:loop()
     end.
